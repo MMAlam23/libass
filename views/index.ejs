@@ -1,0 +1,33 @@
+<%-include('comman/Header')%>
+<%-include('comman/navbar')%>
+
+    <!-- Main contain section -->
+    <!-- backgr -->
+
+
+    <!-- Colums section -->
+    <div class="row">
+        <div class="column">
+            <div class="card">
+                <%if(data !== undefined){%>
+                    <%data.map(item =>{ %>
+                <img src=<%=item.url%> alt="Image">
+                <h4><%=item.name%></h4>
+                <p><%=item.price%></p>
+                <%})%>
+                <%}%>
+            </div>
+        </div>
+
+    </div>
+    <!-- File uploading from front end -->
+    <form action="/profile" method="post" enctype="multipart/form-data">
+        <input type="text" name="name">
+        <input type="file" name="testImage" />
+        <button type="submit">submit</button>
+    </form>
+    <!-- Footer section -->
+    <div class="footer">
+        <p>Thanks For Visiting our Website</p>
+    </div>
+    <%-include('comman/Footer')%>
