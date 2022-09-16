@@ -8,6 +8,7 @@ const cors = require('cors')
 let ejs = require('ejs')
 const app = express()
 let port = process.env.PORT || 6000
+
 // uncaughtException Error Handler
 process.on('uncaughtException', err => {
     console.log(`Error`, err)

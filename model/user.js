@@ -42,9 +42,10 @@ Users.init({
 })
 // Users.sync({force:true}).then(_=> console.log('workingn')).catch(err=> console.log({err}))
 
-let updateAdminJoi =(param) => {
+let updateAdminJoi = (param) => {
     const schema = joi.object(
         {
+            id: joi.number(),
             email: joi.string().email().min(3).trim(),
             password: joi.string().min(1).trim(),
             username: joi.string().min(3).trim(),
@@ -60,4 +61,4 @@ let updateAdminJoi =(param) => {
     return false
 }
 
-module.exports = { Users ,updateAdminJoi}
+module.exports = { Users, updateAdminJoi }

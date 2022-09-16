@@ -41,14 +41,17 @@ control.createUser = async (req, res, next) => {
     }
     let { email, password, username, address, contact } = req.body
     try {
+        //  checking user is present or not in data bases 
         let checkUser = await Users.findOne({ where: { email }, logging: false })
             .catch(err => { return next(err) })
         if (checkUser !== null) {
             return next(CustomError.alreadyExist())
         }
+        //  hasing password 
         let salt = await bcrypt.genSalt(11)
         let hashPassword = await bcrypt.hash(password, salt)
-        let user = await Users.create({
+        // Creating user 
+        await Users.create({
             email, password: hashPassword, username, address, contact
         }, { logging: false })
         return res.redirect('/viewUser')
@@ -64,20 +67,23 @@ control.updateUser = async (req, res, next) => {
     if (valid) {
         return next(valid)
     }
-    let { email, password, username, address, contact, admin } = req.body
+    let { id, email, password, username, address, contact, admin } = req.body
     try {
-        let checkUser = await Users.findOne({ where: { email }, logging: false })
+        // checking user is present or not 
+        let checkUser = await Users.findOne({ where: { id }, logging: false })
             .catch(err => { return next(err) })
         if (checkUser == null) {
             return next(CustomError.alreadyExist("User is Not Exit !"))
         }
+        // hasing password if password is present 
         if (password) {
             let salt = await bcrypt.genSalt(11)
             let hashPassword = await bcrypt.hash(password, salt)
             password = hashPassword
         }
-        await Users.update({ email, password, username, address, contact, admin }, { where: { email } })
-        
+        // updating User information 
+        await Users.update({ email, password, username, address, contact, admin }, { where: { id }, logging: false })
+        //  redirect to viewAll user page 
         return res.redirect('/viewUser')
     } catch (error) {
         return next(error)
@@ -87,14 +93,14 @@ control.deleteUser = async (req, res, next) => {
     if (!req.user || !req.user.admin || req.user.admin !== "admin") {
         return next(CustomError.unAuthorize())
     }
-    let { email } = req.body
+    let { id } = req.body
     try {
-        let checkUser = await Users.findOne({ where: { email }, logging: false })
+        let checkUser = await Users.findOne({ where: { id }, logging: false })
             .catch(err => { return next(err) })
         if (checkUser == null) {
             return next(CustomError.alreadyExist("User is Not Exit !"))
         }
-        let user = await Users.destroy({ where: { email }, logging: false })
+        let user = await Users.destroy({ where: { id }, logging: false })
         return res.send("Count " + user)
     } catch (error) {
         return next(error)

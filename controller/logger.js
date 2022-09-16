@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const { emailTextSender } = require('../config/nodemail')
+const { emailTextSender, transporter, ForgetPasswordEmailSend } = require('../config/nodemail')
 const joi = require('joi')
 const { Users } = require('../model/user')
 const { UserValidate } = require('../model/joiUser')
@@ -99,46 +99,55 @@ control.changePassword = async (req, res, next) => {
         return next(CustomError.allFieldAreRequired('all field are required '))
     }
 }
+
 control.sendUserPasswordResetEmail = async (req, res, next) => {
     const { email } = req.body
     if (email) {
-        const user = await Users.findOne({ where: { email: email }, logging: false }).catch(error => { return next(error) })
-        if (user) {
-            const secret = user.id + jwt_Secret_Key
-            const token = jwt.sign({ userID: user._id }, secret)
-            const link = `http://127.0.0.1:5000/reset/${user._id}/${token}`
-            console.log(link)
-            // // Send Email
-            // let info = await transporter.sendMail({
-            //   from: process.env.EMAIL_FROM,
-            //   to: user.email,
-            //   subject: "GeekShop - Password Reset Link",
-            //   html: `<a href=${link}>Click Here</a> to Reset Your Password`
-            // })
-            emailTextSender(link)
-            res.send({ "status": "success", "message": "Password Reset Email Sent... Please Check Your Email" })
-        } else {
-            return next(CustomError.alreadyExist("user is not present !"))
+        try {
+
+            const user = await Users.findOne({ where: { email: email }, logging: false })
+                .catch(error => { return next(error) })
+            if (user) {
+                // secret KEY for jwt
+                const secret = user.id + jwt_Secret_Key
+                const token = jwt.sign({ userID: user._id }, secret)
+                // creating link for reset password  
+                const link = `http://127.0.0.1:5000/reset/${user.id}/${token}`
+
+                // // Send Email
+                ForgetPasswordEmailSend(user.email, link)
+
+                res.send({ "status": "success", "message": "Password Reset Email Sent... Please Check Your Email" })
+            } else {
+                return next(CustomError.alreadyExist("user is not present !"))
+            }
+        } catch (error) {
+            return next(error)
         }
+
     } else {
         return next(CustomError.allFieldAreRequired('all field are required '))
     }
 }
+
 control.resetPassword = async (req, res, next) => {
     let { password, confirmPassword } = req.body
     let { id, token } = req.params
     let user = await Users.findOne({ where: { id: id }, logging: false })
-    let secret = user.id + token
+    let secret = user.id + jwt_Secret_Key
     try {
         jwt.verify(token, secret)
         if (password && confirmPassword) {
             if (password === confirmPassword) {
+                // hasing password 
                 let salt = await bcrypt.genSalt(11)
                 let newHashPassword = await bcrypt.hash(password, salt)
+                //  updating user password 
                 let data = await Users.update({ password: newHashPassword }, { where: { id: user.id }, logging: false })
+                // response 
                 return res.send({ status: "success", message: "password is updated ", data })
             } else {
-                return next(CustomError.passwordNotMatch(" password is incorrect !"))
+                return next(CustomError.passwordNotMatch(" password is Not Match !"))
             }
         } else {
             return next(CustomError.allFieldAreRequired('all field are required '))
